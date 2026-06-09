@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Звички · Щоденник себе</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface2: #1C2333;
+    --border: #30363D;
+    --text: #E6EDF3;
+    --muted: #8B949E;
+    --good: #2ECC71;
+    --good-dim: #1a5c3a;
+    --bad: #E74C3C;
+    --bad-dim: #5c1a1a;
+    --neutral: #F0C040;
+    --neutral-dim: #4a3a10;
+    --xp: #7C3AED;
+    --xp-dim: #2d1a5c;
+    font-size: 16px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* PARTICLES */
+  #particles-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 16px 80px; }
+
+  /* HEADER */
+  header {
+    padding: 32px 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .logo {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--good); }
+  .date-badge {
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  /* HERO — XP RING */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 36px;
+    gap: 12px;
+  }
+  .xp-ring-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+  .xp-ring-wrap svg {
+    transform: rotate(-90deg);
+    filter: drop-shadow(0 0 18px var(--ring-color, #2ECC71));
+    transition: filter 0.6s;
+  }
+  .xp-ring-bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
+  .xp-ring-fg {
+    fill: none;
+    stroke: var(--ring-color, #2ECC71);
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 408;
+    stroke-dashoffset: 408;
+    transition: stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1), stroke 0.6s;
+  }
+  .xp-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .xp-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: color 0.6s;
+  }
+  .xp-label { font-size: 0.7rem; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-top: 4px; }
+  .level-badge {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 6px 18px;
+    border-radius: 20px;
+    background: var(--xp-dim);
+    border: 1px solid var(--xp);
+    color: #c4b5fd;
+    letter-spacing: 0.5px;
+    transition: all 0.4s;
+  }
+  .hero-phrase {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); }
+  .stat-card.good { border-color: var(--good-dim); }
+  .stat-card.bad { border-color: var(--bad-dim); }
+  .stat-card.streak { border-color: var(--neutral-dim); }
+  .stat-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card.good .stat-num { color: var(--good); }
+  .stat-card.bad .stat-num { color: var(--bad); }
+  .stat-card.streak .stat-num { color: var(--neutral); }
+  .stat-name { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* ADD FORM */
+  .add-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+  .add-section h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+  .type-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .type-tab {
+    flex: 1;
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: var(--bg);
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .type-tab.good.active { background: var(--good-dim); border-color: var(--good); color: var(--good); }
+  .type-tab.bad.active { background: var(--bad-dim); border-color: var(--bad); color: var(--bad); }
+  .type-tab.neutral.active { background: var(--neutral-dim); border-color: var(--neutral); color: var(--neutral); }
+  .type-tab:hover:not(.active) { border-color: var(--border); color: var(--text); }
+
+  .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+  .habit-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .habit-input:focus { border-color: var(--good); }
+  .habit-input::placeholder { color: var(--muted); }
+
+  .xp-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .xp-selector label { font-size: 0.8rem; color: var(--muted); }
+  .xp-preset {
+    padding: 5px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .xp-preset.selected { background: var(--xp-dim); border-color: var(--xp); color: #c4b5fd; }
+
+  .add-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #2ECC71, #27ae60);
+    color: #fff;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .add-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(46,204,113,0.3); }
+  .add-btn:active { transform: translateY(0); }
+  .add-btn.bad-mode { background: linear-gradient(135deg, #E74C3C, #c0392b); box-shadow: none; }
+  .add-btn.bad-mode:hover { box-shadow: 0 6px 24px rgba(231,76,60,0.3); }
+  .add-btn.neutral-mode { background: linear-gradient(135deg, #F0C040, #d4a017); color: #1a1a1a; box-shadow: none; }
+  .add-btn.neutral-mode:hover { box-shadow: 0 6px 24px rgba(240,192,64,0.3); }
+
+  /* LOG */
+  .log-section h2 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .clear-btn {
+    font-size: 0.75rem;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .clear-btn:hover { color: var(--bad); border-color: var(--bad); }
+
+  .log-list { display: flex; flex-direction: column; gap: 10px; }
+  .log-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease;
+    transition: transform 0.2s;
+  }
+  .log-item:hover { transform: translateX(3px); }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .log-item.good { border-left: 3px solid var(--good); }
+  .log-item.bad { border-left: 3px solid var(--bad); }
+  .log-item.neutral { border-left: 3px solid var(--neutral); }
+  .log-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .log-text { flex: 1; }
+  .log-name { font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .log-meta { font-size: 0.75rem; color: var(--muted); }
+  .log-xp {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+  .log-item.good .log-xp { color: var(--good); background: var(--good-dim); }
+  .log-item.bad .log-xp { color: var(--bad); background: var(--bad-dim); }
+  .log-item.neutral .log-xp { color: var(--neutral); background: var(--neutral-dim); }
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+  .delete-btn:hover { color: var(--bad); }
+
+  .empty-log {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+  }
+  .empty-log .empty-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* XP POPUP */
+  .xp-popup {
+    position: fixed;
+    pointer-events: none;
+    z-index: 200;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(0) scale(1);
+    transition: none;
+  }
+  .xp-popup.animate {
+    animation: xpFloat 1.2s ease forwards;
+  }
+  @keyframes xpFloat {
+    0% { opacity: 1; transform: translateY(0) scale(1.2); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+  }
+
+  @media (max-width: 500px) {
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { padding: 12px 8px; }
+    .stat-num { font-size: 1.5rem; }
+    .form-row { flex-direction: column; }
+    .xp-ring-wrap { width: 130px; height: 130px; }
+    .xp-score { font-size: 2rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+
+<div class="app">
+  <header>
+    <div class="logo">звич<span>·</span>ки</div>
+    <div class="date-badge" id="date-badge"></div>
+  </header>
+
+  <!-- HERO XP RING -->
+  <div class="hero">
+    <div class="xp-ring-wrap">
+      <svg viewBox="0 0 140 140" width="160" height="160">
+        <circle class="xp-ring-bg" cx="70" cy="70" r="65"/>
+        <circle class="xp-ring-fg" id="xp-ring" cx="70" cy="70" r="65"/>
+      </svg>
+      <div class="xp-center">
+        <div class="xp-score" id="xp-score">0</div>
+        <div class="xp-label">БАЛІВ</div>
+      </div>
+    </div>
+    <div class="level-badge" id="level-badge">⚡ Новачок</div>
+    <div class="hero-phrase" id="hero-phrase">Зафіксуй першу звичку сьогодні</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card good">
+      <div class="stat-num" id="good-count">0</div>
+      <div class="stat-name">Добрих</div>
+    </div>
+    <div class="stat-card bad">
+      <div class="stat-num" id="bad-count">0</div>
+      <div class="stat-name">Поганих</div>
+    </div>
+    <div class="stat-card streak">
+      <div class="stat-num" id="streak-count">0</div>
+      <div class="stat-name">Серія днів</div>
+    </div>
+  </div>
+
+  <!-- ADD FORM -->
+  <div class="add-section">
+    <h2>Що ти зробив сьогодні?</h2>
+    <div class="type-tabs">
+      <button class="type-tab good active" data-type="good" onclick="selectType('good')">✅ Корисна</button>
+      <button class="type-tab bad" data-type="bad" onclick="selectType('bad')">❌ Шкідлива</button>
+      <button class="type-tab neutral" data-type="neutral" onclick="selectType('neutral')">🔶 Нейтральна</button>
+    </div>
+    <div class="form-row">
+      <input class="habit-input" id="habit-input" type="text" placeholder="Наприклад: сидів в телефоні 2 год замість 5…" maxlength="120">
+    </div>
+    <div class="xp-selector">
+      <label>Сила:</label>
+      <button class="xp-preset selected" data-xp="5" onclick="selectXp(5)">+5 слабо</button>
+      <button class="xp-preset" data-xp="10" onclick="selectXp(10)">+10 звично</button>
+      <button class="xp-preset" data-xp="20" onclick="selectXp(20)">+20 значно</button>
+      <button class="xp-preset" data-xp="35" onclick="selectXp(35)">+35 прорив</button>
+    </div>
+    <button class="add-btn" id="add-btn" onclick="addHabit()">Записати ✅</button>
+  </div>
+
+  <!-- LOG -->
+  <div class="log-section">
+    <h2>
+      Журнал дня
+      <button class="clear-btn" onclick="clearAll()">Очистити</button>
+    </h2>
+    <div class="log-list" id="log-list">
+      <div class="empty-log">
+        <span class="empty-icon">📓</span>
+        Тут з'являться твої записи<br>Почни прямо зараз
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST & XP POPUP -->
+<div class="toast" id="toast"></div>
+<div class="xp-popup" id="xp-popup"></div>
+
+<script>
+// ——— STATE ———
+let state = JSON.parse(localStorage.getItem('habits_v2') || 'null') || {
+  entries: [],
+  streak: 0,
+  lastDate: null,
+  totalXp: 0
+};
+let selectedType = 'good';
+let selectedXp = 5;
+
+// ——— UTILS ———
+function todayStr() {
+  return new Date().toLocaleDateString('uk-UA', { weekday:'long', day:'numeric', month:'long' });
+}
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+function save() { localStorage.setItem('habits_v2', JSON.stringify(state)); }
+
+// ——— STREAK ———
+function updateStreak() {
+  const today = todayKey();
+  const yesterday = (() => {
+    const d = new Date(); d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  })();
+  if (state.lastDate === today) return;
+  if (state.lastDate === yesterday) state.streak++;
+  else if (state.lastDate !== today) state.streak = 1;
+  state.lastDate = today;
+  save();
+}
+
+// ——— LEVELS ———
+function getLevel(xp) {
+  if (xp < 30)   return { label: '⚡ Новачок',     color: '#8B949E' };
+  if (xp < 80)   return { label: '🌱 Початківець', color: '#2ECC71' };
+  if (xp < 160)  return { label: '🔥 На шляху',    color: '#F0C040' };
+  if (xp < 300)  return { label: '💪 Стабільний',  color: '#7C3AED' };
+  if (xp < 500)  return { label: '🚀 Зростаючий',  color: '#3B82F6' };
+  return           { label: '👑 Майстер звичок',    color: '#F0C040' };
+}
+function getPhrases(xp, goodCount, badCount) {
+  if (goodCount === 0 && badCount === 0) return 'Зафіксуй першу звичку сьогодні';
+  if (goodCount > badCount * 2) return 'Відмінний день! Ти на правильному шляху 💚';
+  if (badCount > goodCount) return 'Буває. Усвідомлення — це вже крок уперед 💙';
+  if (goodCount > 0 && badCount === 0) return 'Чистий день! Так тримати 🌟';
+  return 'Баланс — нормально. Головне — рухатись далі';
+}
+
+// ——— RENDER XP ———
+function renderXp() {
+  const todayEntries = state.entries.filter(e => e.date === todayKey());
+  const xp = todayEntries.reduce((s, e) => s + (e.type === 'good' ? e.xp : e.type === 'bad' ? -e.xp : 0), 0);
+  const absXp = Math.max(0, xp);
+  const pct = Math.min(absXp / 150, 1);
+  const circ = 2 * Math.PI * 65;
+  const offset = circ - pct * circ;
+
+  const goodCount = todayEntries.filter(e => e.type === 'good').length;
+  const badCount = todayEntries.filter(e => e.type === 'bad').length;
+
+  let ringColor, scoreColor;
+  if (xp > 0) { ringColor = '#2ECC71'; scoreColor = '#2ECC71'; }
+  else if (xp < 0) { ringColor = '#E74C3C'; scoreColor = '#E74C3C'; }
+  else { ringColor = '#8B949E'; scoreColor = '#8B949E'; }
+
+  document.documentElement.style.setProperty('--ring-color', ringColor);
+  const ring = document.getElementById('xp-ring');
+  ring.style.strokeDashoffset = offset;
+  ring.style.stroke = ringColor;
+  document.querySelector('.xp-ring-wrap svg').style.filter = `drop-shadow(0 0 18px ${ringColor})`;
+
+  const scoreEl = document.getElementById('xp-score');
+  scoreEl.textContent = (xp > 0 ? '+' : '') + xp;
+  scoreEl.style.color = scoreColor;
+
+  const level = getLevel(absXp);
+  const levelBadge = document.getElementById('level-badge');
+  levelBadge.textContent = level.label;
+  levelBadge.style.borderColor = level.color;
+  levelBadge.style.color = level.color;
+
+  document.getElementById('hero-phrase').textContent = getPhrases(xp, goodCount, badCount);
+  document.getElementById('good-count').textContent = goodCount;
+  document.getElementById('bad-count').textContent = badCount;
+  document.getElementById('streak-count').textContent = state.streak || 0;
+}
+
+// ——— RENDER LOG ———
+function renderLog() {
+  const list = document.getElementById('log-list');
+  const todayEntries = state.entries.filter(e => e.date === todayKey()).reverse();
+
+  if (!todayEntries.length) {
+    list.innerHTML = '<div class="empty-log"><span class="empty-icon">📓</span>Тут з\'являться твої записи<br>Почни прямо зараз</div>';
+    return;
+  }
+
+  const icons = { good: '✅', bad: '❌', neutral: '🔶' };
+  const labels = { good: 'корисна', bad: 'шкідлива', neutral: 'нейтральна' };
+  list.innerHTML = todayEntries.map(e => `
+    <div class="log-item ${e.type}" id="entry-${e.id}">
+      <div class="log-icon">${icons[e.type]}</div>
+      <div class="log-text">
+        <div class="log-name">${e.text}</div>
+        <div class="log-meta">${labels[e.type]} · ${e.time}</div>
+      </div>
+      <div class="log-xp">${e.type === 'good' ? '+' : e.type === 'bad' ? '-' : ''}${e.xp} бал</div>
+      <button class="delete-btn" onclick="deleteEntry('${e.id}')" title="Видалити">✕</button>
+    </div>
+  `).join('');
+}
+
+// ——— ADD HABIT ———
+function addHabit() {
+  const input = document.getElementById('habit-input');
+  const text = input.value.trim();
+  if (!text) { showToast('Напиши що ти зробив!', '⚠️'); shakeInput(); return; }
+
+  updateStreak();
+
+  const entry = {
+    id: Date.now().toString(),
+    text,
+    type: selectedType,
+    xp: selectedXp,
+    date: todayKey(),
+    time: new Date().toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })
+  };
+  state.entries.push(entry);
+  save();
+
+  input.value = '';
+  renderLog();
+  renderXp();
+
+  showXpPopup(entry.type, entry.xp);
+  const msgs = {
+    good: ['Так тримати! 💪', 'Молодець! Зараховано ✨', 'Ще один крок вперед! 🌱'],
+    bad: ['Чесність — це сила 💙', 'Усвідомив — вже половина роботи', 'Записано. Працюємо над цим 🔧'],
+    neutral: ['Зафіксовано 📌', 'Записав!', 'Нейтральний запис додано']
+  };
+  const arr = msgs[entry.type];
+  showToast(arr[Math.floor(Math.random() * arr.length)]);
+  spawnParticles(entry.type);
+}
+
+function deleteEntry(id) {
+  state.entries = state.entries.filter(e => e.id !== id);
+  save();
+  renderLog();
+  renderXp();
+}
+
+function clearAll() {
+  if (!confirm('Очистити всі записи за сьогодні?')) return;
+  state.entries = state.entries.filter(e => e.date !== todayKey());
+  save();
+  renderLog();
+  renderXp();
+  showToast('Журнал очищено', '🗑️');
+}
+
+// ——— TYPE / XP SELECT ———
+function selectType(type) {
+  selectedType = type;
+  document.querySelectorAll('.type-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.type-tab[data-type="${type}"]`).classList.add('active');
+  const btn = document.getElementById('add-btn');
+  btn.className = 'add-btn' + (type === 'bad' ? ' bad-mode' : type === 'neutral' ? ' neutral-mode' : '');
+  const labels = { good: 'Записати ✅', bad: 'Записати ❌', neutral: 'Записати 🔶' };
+  btn.textContent = labels[type];
+  document.getElementById('habit-input').placeholder = {
+    good: 'Наприклад: зробив зарядку 30 хв…',
+    bad: 'Наприклад: виплеснув злість, накричав…',
+    neutral: 'Наприклад: дивився серіал 1 год…'
+  }[type];
+}
+
+function selectXp(xp) {
+  selectedXp = xp;
+  document.querySelectorAll('.xp-preset').forEach(b => {
+    b.classList.toggle('selected', parseInt(b.dataset.xp) === xp);
+  });
+}
+
+// ——— TOAST ———
+function showToast(msg, icon = '') {
+  const t = document.getElementById('toast');
+  t.textContent = (icon ? icon + ' ' : '') + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function shakeInput() {
+  const el = document.getElementById('habit-input');
+  el.style.borderColor = '#E74C3C';
+  el.style.animation = 'none';
+  setTimeout(() => { el.style.animation = ''; el.style.borderColor = ''; }, 600);
+}
+
+// ——— XP POPUP ———
+function showXpPopup(type, xp) {
+  const popup = document.getElementById('xp-popup');
+  const colors = { good: '#2ECC71', bad: '#E74C3C', neutral: '#F0C040' };
+  const signs = { good: '+', bad: '-', neutral: '' };
+  popup.style.color = colors[type];
+  popup.textContent = signs[type] + xp + ' бал';
+  const btn = document.getElementById('add-btn');
+  const rect = btn.getBoundingClientRect();
+  popup.style.left = (rect.left + rect.width / 2 - 30) + 'px';
+  popup.style.top = (rect.top + window.scrollY - 10) + 'px';
+  popup.className = 'xp-popup';
+  void popup.offsetWidth;
+  popup.classList.add('animate');
+}
+
+// ——— PARTICLES ———
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+
+function spawnParticles(type) {
+  const colors = { good: ['#2ECC71','#27ae60','#a8f5ca'], bad: ['#E74C3C','#c0392b','#f5a8a8'], neutral: ['#F0C040','#d4a017','#ffe8a0'] };
+  const c = colors[type];
+  const cx = window.innerWidth / 2;
+  const cy = window.innerHeight * 0.35;
+  for (let i = 0; i < 18; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 2 + Math.random() * 4;
+    particles.push({
+      x: cx, y: cy,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 2,
+      r: 3 + Math.random() * 5,
+      alpha: 1,
+      color: c[Math.floor(Math.random() * c.length)]
+    });
+  }
+}
+
+function animParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => p.alpha > 0.01);
+  for (const p of particles) {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15;
+    p.alpha -= 0.025;
+    ctx.save();
+    ctx.globalAlpha = p.alpha;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+    ctx.restore();
+  }
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+// ——— ENTER KEY ———
+document.getElementById('habit-input').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit(); });
+
+// ——— INIT ———
+document.getElementById('date-badge').textContent = todayStr();
+updateStreak();
+renderLog();
+renderXp();
+</script>
+</body>
+</html>
